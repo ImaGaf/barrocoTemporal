@@ -6,8 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { customerAPI } from "@/lib/api";
+import { customerAPI, RegisterAPI } from "@/lib/api";
 import { Link } from "react-router-dom";
+import { LoginAPI } from "@/lib/api";
+
+
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,17 +37,27 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      // Simulate login - in real implementation, this would call an auth API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const user = await LoginAPI.login(loginForm.email, loginForm.password);
+
       toast({
         title: "Inicio de sesión exitoso",
-        description: "Bienvenido de vuelta",
+        description: `Bienvenido, ${user.firstName || user.email}`,
       });
-    } catch (error) {
+
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (user.role === "admin") {
+        window.location.href = "/dashboardadmin";
+      } else if (user.role === "employee") {
+        window.location.href = "/empleados";
+      } else {
+        window.location.href = "/productos";
+      }
+
+    } catch (error: any) {
       toast({
         title: "Error de autenticación",
-        description: "Credenciales incorrectas",
+        description: error.message || "No se pudo iniciar sesión",
         variant: "destructive",
       });
     } finally {
@@ -52,55 +65,64 @@ export default function Auth() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (registerForm.password !== registerForm.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Las contraseñas no coinciden",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    setIsLoading(true);
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      const customerData = {
-        idCustomer: `CUST_${Date.now()}`,
-        phone: registerForm.phone,
-        billingAddress: registerForm.billingAddress,
-      };
+  if (registerForm.password !== registerForm.confirmPassword) {
+    toast({
+      title: "Error",
+      description: "Las contraseñas no coinciden",
+      variant: "destructive",
+    });
+    return;
+  }
 
-      await customerAPI.create(customerData);
+  setIsLoading(true);
 
-      toast({
-        title: "Registro exitoso",
-        description: "Tu cuenta ha sido creada correctamente",
-      });
+  try {
+    const customerData = {
+      firstName: registerForm.firstName,
+      lastName: registerForm.lastName,
+      email: registerForm.email,
+      password: registerForm.password,
+      phone: registerForm.phone,
+      billingAddress: registerForm.billingAddress,
+      shippingAddress: registerForm.shippingAddress,
+    };
 
-      // Reset form
-      setRegisterForm({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        phone: "",
-        billingAddress: "",
-        shippingAddress: "",
-      });
-    } catch (error) {
-      toast({
-        title: "Error en el registro",
-        description: "No se pudo crear la cuenta. Intenta nuevamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    await RegisterAPI.registerCustomer(customerData);
+
+    toast({
+      title: "Registro exitoso",
+      description: "Tu cuenta ha sido creada correctamente",
+    });
+
+    setRegisterForm({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
+      billingAddress: "",
+      shippingAddress: "",
+    });
+
+    window.location.href = "/login";
+
+  } catch (error) {
+    toast({
+      title: "Error en el registro",
+      description: "No se pudo crear la cuenta. Intenta nuevamente.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cornsilk via-warm to-accent flex items-center justify-center p-4">
@@ -153,8 +175,8 @@ export default function Auth() {
                       required
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-ceramics hover:bg-ceramics/90 text-ceramics-foreground"
                     disabled={isLoading}
                   >
@@ -263,8 +285,8 @@ export default function Auth() {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-ceramics hover:bg-ceramics/90 text-ceramics-foreground"
                     disabled={isLoading}
                   >

@@ -53,12 +53,6 @@ export function Layout({ children }: LayoutProps) {
                 Productos
               </Link>
               <Link 
-                to="/categorias" 
-                className={`text-sm font-medium transition-colors hover:text-primary ${isActive('/categorias') ? 'text-primary' : 'text-muted-foreground'}`}
-              >
-                Categorías
-              </Link>
-              <Link 
                 to="/personalizar" 
                 className={`text-sm font-medium transition-colors hover:text-primary ${isActive('/personalizar') ? 'text-primary' : 'text-muted-foreground'}`}
               >

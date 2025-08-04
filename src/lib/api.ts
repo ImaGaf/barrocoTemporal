@@ -1,6 +1,7 @@
+import bcrypt from 'bcryptjs';
+
 const BASE_URL = 'https://awd224062025htmlfrozonoinc.onrender.com/barroco';
 
-// Generic API function
 async function api<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     headers: {
@@ -16,6 +17,19 @@ async function api<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
   return response.json();
 }
+
+export const getCurrentUser = (): any | null => {
+  const userStr = sessionStorage.getItem("user");
+  try {
+    return userStr ? JSON.parse(userStr) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const logoutUser = () => {
+  sessionStorage.removeItem("user");
+};
 
 // Customer API
 export const customerAPI = {
@@ -54,6 +68,7 @@ export const cartItemAPI = {
 // Order API
 export const orderAPI = {
   create: (data: any) => api('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  getAll: () => api('/orders'),
   getById: (id: string) => api(`/orders/${id}`),
   update: (id: string, data: any) => api(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/orders/${id}`, { method: 'DELETE' }),
@@ -81,6 +96,7 @@ export const adminAPI = {
   getById: (id: string) => api(`/administrators/${id}`),
   update: (id: string, data: any) => api(`/administrators/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/administrators/${id}`, { method: 'DELETE' }),
+  getAll: () => api('/administrators'),
 };
 
 // Employee API
@@ -89,6 +105,7 @@ export const employeeAPI = {
   getById: (id: string) => api(`/employees/${id}`),
   update: (id: string, data: any) => api(`/employees/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/employees/${id}`, { method: 'DELETE' }),
+  getAll: () => api('/employees'),
 };
 
 // Stats API
@@ -120,4 +137,43 @@ export const invoiceAPI = {
   getById: (id: string) => api(`/invoices/${id}`),
   update: (id: string, data: any) => api(`/invoices/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => api(`/invoices/${id}`, { method: 'DELETE' }),
+};
+
+// Login API
+export const LoginAPI = {
+  login: async (email: string, password: string) => {
+    const adminsRaw = await adminAPI.getById("all").catch(() => []);
+    const employeesRaw = await employeeAPI.getAll().catch(() => []);
+    const customersRaw = await customerAPI.getAll().catch(() => []);
+
+    const admins = Array.isArray(adminsRaw) ? adminsRaw : [];
+    const employees = Array.isArray(employeesRaw) ? employeesRaw : [];
+    const customers = Array.isArray(customersRaw) ? customersRaw : [];
+
+    const allUsers = [
+      ...admins.map((u: any) => ({ ...u, role: "admin" })),
+      ...employees.map((u: any) => ({ ...u, role: "employee" })),
+      ...customers.map((u: any) => ({ ...u, role: "customer" })),
+    ];
+
+    const user = allUsers.find((u: any) => u.email === email);
+    if (!user) throw new Error("Usuario no encontrado");
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) throw new Error("Contraseña incorrecta");
+
+    // Guardar sesión
+    sessionStorage.setItem("user", JSON.stringify(user));
+
+    return user;
+  },
+};
+
+export const RegisterAPI = {
+  registerCustomer: async (data: any) => {
+    const user = await customerAPI.create({ ...data });
+    const userWithRole = { ...(typeof user === 'object' && user !== null ? user : {}), role: "customer" };
+    sessionStorage.setItem("user", JSON.stringify(userWithRole));
+    return userWithRole;
+  },
 };

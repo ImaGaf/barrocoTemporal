@@ -1,10 +1,23 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Star, Search, Filter, ShoppingCart, Heart } from "lucide-react";
 import { productAPI, categoryAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -17,12 +30,12 @@ export default function Products() {
   const { toast } = useToast();
 
   const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['products'],
+    queryKey: ["products"],
     queryFn: productAPI.getAll,
   });
 
   const { data: categories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: categoryAPI.getAll,
   });
 
@@ -31,9 +44,11 @@ export default function Products() {
 
   const filteredProducts = productList
     .filter((product: any) => {
-      const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+      const matchesSearch =
+        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        selectedCategory === "all" || product.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
     .sort((a: any, b: any) => {
@@ -58,7 +73,7 @@ export default function Products() {
     };
 
     cartStore.addItem(cartItem);
-    
+
     toast({
       title: "Producto agregado",
       description: `${product.name} se ha añadido al carrito`,
@@ -103,8 +118,8 @@ export default function Products() {
               Catálogo de Productos
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Explora nuestra colección completa de cerámicas artesanales. 
-              Cada pieza es única y está hecha con amor y dedicación.
+              Explora nuestra colección completa de cerámicas artesanales. Cada
+              pieza es única y está hecha con amor y dedicación.
             </p>
           </div>
         </div>
@@ -126,14 +141,17 @@ export default function Products() {
             </div>
 
             {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => setSelectedCategory(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Todas las categorías" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las categorías</SelectItem>
                 {categoryList.map((category: any) => (
-                  <SelectItem key={category.idCategory} value={category.name}>
+                  <SelectItem key={category.idCategory} value={category.idCategory}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -141,7 +159,7 @@ export default function Products() {
             </Select>
 
             {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
@@ -153,7 +171,10 @@ export default function Products() {
             </Select>
 
             {/* Filter Button */}
-            <Button variant="outline" className="border-ceramics text-ceramics hover:bg-ceramics hover:text-ceramics-foreground">
+            <Button
+              variant="outline"
+              className="border-ceramics text-ceramics hover:bg-ceramics hover:text-ceramics-foreground"
+            >
               <Filter className="h-4 w-4 mr-2" />
               Más Filtros
             </Button>
@@ -165,28 +186,37 @@ export default function Products() {
           <p className="text-muted-foreground">
             Mostrando {filteredProducts.length} productos
             {searchTerm && ` para "${searchTerm}"`}
-            {selectedCategory !== "all" && ` en "${selectedCategory}"`}
+            {selectedCategory !== "all" && ` en "${categoryList.find(cat => cat.idCategory === selectedCategory)?.name || selectedCategory}"`}
           </p>
         </div>
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProducts.map((product: any, index: number) => (
-            <Card key={product.idProduct || index} className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-b from-card to-card/50 border-0 shadow-lg overflow-hidden">
+            <Card
+              key={product.idProduct || index}
+              className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-b from-card to-card/50 border-0 shadow-lg overflow-hidden"
+            >
               <CardHeader className="p-0">
-                <div className="aspect-[4/3] bg-gradient-to-br from-pastel-pink via-pastel-cream to-pastel-lavender rounded-t-lg relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                      <span className="text-5xl filter drop-shadow-lg">🏺</span>
-                    </div>
-                  </div>
+                <div className="aspect-[4/3] rounded-t-lg relative overflow-hidden">
+                  <img
+                    src={product.url || "https://via.placeholder.com/400x300?text=Sin+Imagen"}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://via.placeholder.com/400x300?text=Sin+Imagen";
+                    }}
+                  />
                   <div className="absolute top-4 left-4 flex flex-col gap-2">
                     <Badge className="bg-ceramics hover:bg-ceramics/90 text-ceramics-foreground shadow-lg">
                       Artesanal
                     </Badge>
                     {product.customizationAvailable && (
-                      <Badge variant="secondary" className="bg-white/90 text-foreground shadow-lg">
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/90 text-foreground shadow-lg"
+                      >
                         Personalizable
                       </Badge>
                     )}
@@ -219,7 +249,8 @@ export default function Products() {
                   {product.name || `Producto Artesanal ${index + 1}`}
                 </CardTitle>
                 <CardDescription className="text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
-                  {product.description || "Hermosa pieza de cerámica hecha a mano con técnicas tradicionales. Cada producto es único y especial, creado con amor y dedicación por nuestros artesanos."}
+                  {product.description ||
+                    "Hermosa pieza de cerámica hecha a mano con técnicas tradicionales. Cada producto es único y especial, creado con amor y dedicación por nuestros artesanos."}
                 </CardDescription>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex flex-col">
@@ -230,19 +261,28 @@ export default function Products() {
                       Precio por unidad
                     </span>
                   </div>
-                  <Badge 
-                    variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}
+                  <Badge
+                    variant={
+                      product.stock > 10
+                        ? "default"
+                        : product.stock > 0
+                        ? "secondary"
+                        : "destructive"
+                    }
                     className="px-3 py-1"
                   >
                     {product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground mb-4 p-2 bg-muted/50 rounded-lg">
-                  <span className="font-medium">Categoría:</span> {product.category || "Cerámica General"}
+                  <span className="font-medium">Categoría:</span>{" "}
+                  {categoryList.find(
+                    (cat) => cat.idCategory === product.category
+                  )?.name || "Cerámica General"}
                 </div>
               </CardContent>
               <CardFooter className="p-6 pt-0 flex gap-3">
-                <Button 
+                <Button
                   className="flex-1 bg-ceramics hover:bg-ceramics/90 text-ceramics-foreground h-12 text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                   disabled={product.stock === 0}
                   onClick={() => addToCart(product)}
@@ -250,7 +290,11 @@ export default function Products() {
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Agregar al Carrito
                 </Button>
-                <Button variant="outline" size="icon" className="h-12 w-12 border-ceramics text-ceramics hover:bg-ceramics hover:text-ceramics-foreground">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-12 w-12 border-ceramics text-ceramics hover:bg-ceramics hover:text-ceramics-foreground"
+                >
                   <span className="text-lg">👁️</span>
                 </Button>
               </CardFooter>
@@ -263,9 +307,7 @@ export default function Products() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold mb-2">No se encontraron productos</h3>
-            <p className="text-muted-foreground">
-              Intenta ajustar tus filtros de búsqueda
-            </p>
+            <p className="text-muted-foreground">Intenta ajustar tus filtros de búsqueda</p>
           </div>
         )}
       </div>
